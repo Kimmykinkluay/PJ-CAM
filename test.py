@@ -3,19 +3,23 @@ import numpy as np
 import time
 import os
 import firebase_admin
-from firebase_admin import credentials, db
+from firebase_admin import credentials, db, storage
 from datetime import datetime
 
 # Initialize Firebase Admin SDK
 cred = credentials.Certificate('path/to/your/serviceAccountKey.json')  # Update with the path to your service account key file
 firebase_admin.initialize_app(cred, {
-    'databaseURL': 'https://project-camera-50c3d-default-rtdb.firebaseio.com/'  # Update with your Firebase Realtime Database URL
+    'databaseURL': 'https://project-camera-50c3d-default-rtdb.firebaseio.com/',  # Update with your Firebase Realtime Database URL
+    'storageBucket': 'project-camera-50c3d.appspot.com'  # Update with your Firebase Storage bucket name
 })
 
 # Reference to the Firebase Realtime Database
 ref = db.reference('face_images')
 
-# Define the path to save images
+# Reference to Firebase Storage
+bucket = storage.bucket()
+
+# Define the path to save images locally
 save_path = r'C:\Kimmy\reac\Toturial\KKKKK\MY PJ CAM\New folder'
 
 # Load cascade classifiers
@@ -53,14 +57,19 @@ while True:
     
     for (x, y, w, h) in faces:
         count += 1
-        # Save the cropped face image
+        # Save the cropped face image locally
         filename = os.path.join(save_path, f'Pic_{user_id}_{count}.jpg')
         cv2.imwrite(filename, gray[y:y+h, x:x+w])
+        
+        # Upload the image to Firebase Storage
+        blob = bucket.blob(f'images/{user_id}/Pic_{user_id}_{count}.jpg')
+        blob.upload_from_filename(filename)
+        image_url = blob.public_url
         
         # Upload metadata to Firebase Realtime Database
         ref.push({
             'user_id': user_id,
-            'image_path': filename,
+            'image_url': image_url,
             'timestamp': datetime.now().isoformat()
         })
         
@@ -89,6 +98,9 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
+# Release the webcam and close all windows
+cap.release()
+cv2.destroyAllWindows()
 # Release the webcam and close all windows
 cap.release()
 cv2.destroyAllWindows()
