@@ -42,7 +42,7 @@ ref = db.reference('face_images')
 
 data = {
     "km": {
-        "ID": "100000",
+        "id": "100000",
         "name": "Thanakim Pudpong",
         "major": "IT",
         "starting_year": 2020,
@@ -52,7 +52,7 @@ data = {
         "last_attendance": "2020-11-11 00:00:00"
     },
     "Ohm": {
-        "ID": "100001",
+        "id": "100001",
         "name": "Thanapipat Binohmar",
         "major": "IT",
         "starting_year": 2020,
