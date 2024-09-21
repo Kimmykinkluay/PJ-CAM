@@ -9,8 +9,8 @@ from firebase_admin import storage
 
 cred = credentials.Certificate("serviceAccountKey.json")
 firebase_admin.initialize_app(cred,{
-    'databaseURL': "https://facerecognitionwithrealt-507bc-default-rtdb.firebaseio.com/",
-   'storageBucket': "facerecognitionwithrealt-507bc.appspot.com"
+    'databaseURL': 'https://project-camera-50c3d-default-rtdb.firebaseio.com/', # เปลี่ยนเป็น URL ของ Firebase Realtime Database ของคุณ
+    'storageBucket': 'project-camera-50c3d.appspot.com' # เปลี่ยนเป็นชื่อ Firebase Storage bucket ของคุณ
 })
 
 # importing student images
