@@ -41,8 +41,7 @@ except Exception as e:
 ref = db.reference('face_images')
 
 data = {
-    "km": {
-        "id": "100000",
+    "100000": {
         "name": "Thanakim Pudpong",
         "major": "IT",
         "starting_year": 2020,
@@ -51,8 +50,7 @@ data = {
         "year": 1,
         "last_attendance": "2020-11-11 00:00:00"
     },
-    "Ohm": {
-        "id": "100001",
+    "100001": {
         "name": "Thanapipat Binohmar",
         "major": "IT",
         "starting_year": 2020,
