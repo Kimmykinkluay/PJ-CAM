@@ -5,9 +5,7 @@ import numpy as np
 import cv2
 import face_recognition
 import firebase_admin
-from firebase_admin import credentials
-from firebase_admin import db
-from firebase_admin import storage
+from firebase_admin import credentials, db, storage
 from datetime import datetime
 
 # Initialize Firebase
@@ -21,13 +19,13 @@ bucket = storage.bucket()
 
 # Initialize video capture
 cap = cv2.VideoCapture(0)
-cap.set(3, 640)
-cap.set(4, 480)
+cap.set(3, 640)  # Set width
+cap.set(4, 480)  # Set height
 
 # Load and resize background image
 imgBackground = cv2.imread(r'C:\Kimmy\reac\Toturial\KKKKK\MY PJ CAM\FL\attendance\background.png')
-imgBackground = cv2.resize(imgBackground, (2245, 1587))
-bg_height, bg_width = imgBackground.shape[:2]
+imgBackground = cv2.resize(imgBackground, (2245, 1587))  # Adjust background size
+
 # Importing mode images
 folderModePath = r'C:\Kimmy\reac\Toturial\KKKKK\MY PJ CAM\FL\attendance'
 modePathList = os.listdir(folderModePath)
@@ -35,9 +33,7 @@ imgModeList = []
 
 for path in modePathList:
     img = cv2.imread(os.path.join(folderModePath, path))
-    if img is None:
-        print(f"Failed to load image: {path}")
-    else:
+    if img is not None:
         imgModeList.append(img)
 
 if not imgModeList:
@@ -50,11 +46,7 @@ try:
     encodeListKnown, studentIds = encodeListKnownWithIds
 except (FileNotFoundError, pickle.UnpicklingError) as e:
     print(f"Error loading encoding file: {e}")
-    encodeListKnown, studentIds = [], []  # Initialize if load fails
-
-# Check if encodeListKnown is empty
-if not encodeListKnown:
-    print("No known faces loaded. Please check the encoding file.")
+    encodeListKnown, studentIds = [], []  # Initialize empty lists if load fails
 
 modeType = 0
 counter = 0
@@ -63,9 +55,9 @@ imgStudent = []
 
 while True:
     success, img = cap.read()
-
     img = cv2.resize(img, (640, 480))
 
+    # Process webcam feed for face recognition
     imgS = cv2.resize(img, (0, 0), None, 0.25, 0.25)
     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
 
@@ -74,24 +66,21 @@ while True:
 
     # Display the webcam feed on the resized background
     imgBackground[162:162 + 480, 55:55 + 640] = img
-    
 
-    if imgModeList:  # Check if imgModeList is not empty
-        imgModeResized = cv2.resize(imgModeList[modeType], (414, 633))  # Resize to the correct dimensions
-        imgBackground[44:44 + 633, 808:808 + 414] = imgModeResized  # Assign resized image
-    else:
-        print("imgModeList is empty. Cannot assign image.")
+    if imgModeList:
+        imgModeResized = cv2.resize(imgModeList[modeType], (414, 633))  # Resize mode image
+        imgBackground[44:44 + 633, 808:808 + 414] = imgModeResized  # Place resized image on background
 
     if faceCurFrame:
         for encodeFace, faceLoc in zip(encodeCurFrame, faceCurFrame):
-            if encodeListKnown:  # Check if encodeListKnown is not empty
+            if encodeListKnown:
                 matches = face_recognition.compare_faces(encodeListKnown, encodeFace)
                 faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
 
                 matchIndex = np.argmin(faceDis)
 
                 if matches[matchIndex]:
-                    # Building BOX around face
+                    # Draw box around the recognized face
                     y1, x2, y2, x1 = faceLoc
                     y1, x2, y2, x1 = y1 * 4, x2 * 4, y2 * 4, x1 * 4
                     bbox = 55 + x1, 162 + y1, x2 - x1, y2 - y1
@@ -110,15 +99,14 @@ while True:
                 studentInfo = db.reference(f'Students/{id}').get()
                 print(studentInfo)
 
-                # Get image from storage
+                # Get student image from Firebase storage
                 blob = bucket.get_blob(f'images/{id}.png')
                 array = np.frombuffer(blob.download_as_string(), np.uint8)
                 imgStudent = cv2.imdecode(array, cv2.IMREAD_COLOR)
 
-                # Update attendance
+                # Update attendance if more than 30 seconds have passed
                 datetimeObject = datetime.strptime(studentInfo['last_attendance_time'], "%Y-%m-%d %H:%M:%S")
                 secondsElapsed = (datetime.now() - datetimeObject).total_seconds()
-                print(secondsElapsed)
                 if secondsElapsed > 30:
                     ref = db.reference(f'Students/{id}')
                     studentInfo['total_attendance'] += 1
@@ -169,15 +157,12 @@ while True:
                     imgStudent = []
                     imgBackground[44:44 + 633, 808:808 + 414] = imgModeList[modeType]
 
-                    
-
-                   
     else:
         modeType = 0
         counter = 0
 
+    # Display the final output
     cv2.imshow("Face Attendance", imgBackground)
-    if cv2.waitKey(1) & 0xFF == ord('q'):  # กด 'q' เพื่อปิดกล้อง
+    if cv2.waitKey(1) & 0xFF == ord('q'):  # Press 'q' to exit
         break
 
-    cv2.waitKey(1)
